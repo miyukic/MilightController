@@ -3,29 +3,66 @@
 # ダブルShift を押すと、クラス/ファイル/ツールウィンドウ/アクション/設定を検索します。
 
 import socket
+import time
+
 
 def print_hi(name):
     # スクリプトをデバッグするには以下のコード行でブレークポイントを使用してください。
     print(f'Hi, {name}')  # Ctrl+F8を押すとブレークポイントを切り替えます。
 
+
+class LightController:
+
+    def __init__(self, ipaddr='192.168.1.255', port=8899, group=0):
+        self._IPADDR    = ipaddr
+        self._PORT      = port
+        self._GROUP     = group # 0~3
+
+    def light_increase(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            sock.connect((self._IPADDR, self._PORT))
+            cmd = [0x45, 0x00]
+            cmd[0] += self._GROUP * 2
+            sock.send(bytes(cmd))
+
+    def light_reduce(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            sock.connect((self._IPADDR, self._PORT))
+            cmd = [0x4e, 0xaa]
+            cmd[0] += self._GROUP * 2
+            sock.send(bytes(cmd))
+
+    def light_off(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            sock.connect((self._IPADDR, self._PORT))
+            cmd = [0x46, 0x00]
+            cmd[0] += self._GROUP * 2
+            sock.send(bytes(cmd))
+
+    def light_on(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            sock.connect((self._IPADDR, self._PORT))
+            cmd = [0x45, 0x00]
+            cmd[0] += self._GROUP * 2
+            sock.send(bytes(cmd))
+
+
 def main():
-    IPADDR = '192.168.1.255'
-    PORT = 8899
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-        sock.connect((IPADDR, PORT))
-        cmd = [0x47, 0x00]
-        sock.send(bytes(cmd))
-    #sock.send("hello".encode("utf-8"))
+    lc = LightController(group=1)
+    lc.light_off()
+    lc.light_on()
+    flag = True
+    fps = 5
+    while True:
+        time.sleep(1 / fps)
+        if flag:
+            lc.light_off()
+            flag = False
+        else:
+            lc.light_on()
+            flag = True
 
-    #cmd = [ 0x31, 0x00, 0x00, 0x08, 0x04, 0x01, 0x00, 0x00, 0x00, zone ]
 
-    #ctrlData = [ 0x80, 0x00, 0x00, 0x00, 0x11,
-    #            sessionId1,  sessionId2, 0x00, iboxSeq, 0x00,
-    #            cmd[0], cmd[1], cmd[2], cmd[3], cmd[4],
-    #            cmd[5], cmd[6], cmd[7], cmd[8], cmd[9],
-    #            0x00, checkSum ]
-
-# ガター内の緑色のボタンを押すとスクリプトを実行します。
 if __name__ == '__main__':
     main()
 #    print_hi('PyCharm')
